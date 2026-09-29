@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#030322">
+    <meta name="description" content="Check current weather and forecasts for any city.">
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/images/favicon-32x32.png">
+    <link rel="stylesheet" href="./style.css">
+    <script src="./script.js" defer></script>
+    <title>Weather Now</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="site-header">
+        <a class="brand" href="./" aria-label="Weather Now home">
+          <img src="./assets/images/logo.svg" alt="">
+          <span>Weather Now</span>
+        </a>
+
+        <details class="units-menu" id="units-menu">
+          <summary class="units-menu__toggle">
+            <img src="./assets/images/icon-units.svg" alt="">
+            <span>Units</span>
+            <img src="./assets/images/icon-dropdown.svg" alt="">
+          </summary>
+          <form class="units-menu__panel" aria-label="Measurement units">
+            <button class="units-menu__preset" id="units-preset-button" type="button">Switch to Imperial</button>
+            <fieldset class="unit-group">
+              <legend>Temperature</legend>
+              <label class="unit-option"><input type="radio" name="temperature-unit" value="celsius" checked><span>Celsius (°C)</span><img src="./assets/images/icon-checkmark.svg" alt=""></label>
+              <label class="unit-option"><input type="radio" name="temperature-unit" value="fahrenheit"><span>Fahrenheit (°F)</span><img src="./assets/images/icon-checkmark.svg" alt=""></label>
+            </fieldset>
+            <fieldset class="unit-group">
+              <legend>Wind Speed</legend>
+              <label class="unit-option"><input type="radio" name="wind-unit" value="kmh" checked><span>km/h</span><img src="./assets/images/icon-checkmark.svg" alt=""></label>
+              <label class="unit-option"><input type="radio" name="wind-unit" value="mph"><span>mph</span><img src="./assets/images/icon-checkmark.svg" alt=""></label>
+            </fieldset>
+            <fieldset class="unit-group">
+              <legend>Precipitation</legend>
+              <label class="unit-option"><input type="radio" name="precipitation-unit" value="mm" checked><span>Millimeters (mm)</span><img src="./assets/images/icon-checkmark.svg" alt=""></label>
+              <label class="unit-option"><input type="radio" name="precipitation-unit" value="inch"><span>Inches (in)</span><img src="./assets/images/icon-checkmark.svg" alt=""></label>
+            </fieldset>
+          </form>
+        </details>
+      </header>
+
+      <main class="weather-app">
+        <h1 class="page-title">How’s the sky looking today?</h1>
+
+        <form class="search-form" id="search-form" role="search">
+          <label class="visually-hidden" for="city-search">Search for a city</label>
+          <div class="search-control-wrap">
+            <div class="search-form__field">
+              <img src="./assets/images/icon-search.svg" alt="">
+              <input id="city-search" name="city" type="search" placeholder="Search for a place..." autocomplete="off" aria-autocomplete="list" aria-controls="city-suggestions" aria-expanded="false" required>
+            </div>
+            <div class="city-suggestions" id="city-suggestions" role="listbox" aria-label="Matching cities" hidden></div>
+          </div>
+          <button class="button button--primary" type="submit">Search</button>
+        </form>
+
+        <p class="search-status" id="search-status" role="status" aria-live="polite" hidden></p>
+
+        <section class="message-state no-results-state" id="no-results-state" aria-live="polite" hidden>
+          <h2>No search result found!</h2>
+        </section>
+
+        <section class="message-state api-error-state" id="api-error-state" aria-labelledby="api-error-title" hidden>
+          <img src="./assets/images/icon-error.svg" alt="">
+          <h2 id="api-error-title">Something went wrong</h2>
+          <p>We couldn’t connect to the server (API error). Please try again in a few moments.</p>
+          <button class="button api-error-state__retry" id="retry-button" type="button">
+            <img src="./assets/images/icon-retry.svg" alt="">
+            Retry
+          </button>
+        </section>
+
+        <div class="weather-layout" id="weather-content" aria-busy="false">
+          <div class="weather-main-column">
+            <section class="current-weather" aria-labelledby="current-city">
+              <div class="current-weather__summary">
+                <h2 id="current-city">Berlin, Germany</h2>
+                <p id="current-date">Tuesday, Aug 5, 2025</p>
+                <p class="current-weather__condition" id="current-condition">Sunny</p>
+              </div>
+              <div class="current-weather__reading">
+                <img id="current-icon" src="./assets/images/icon-sunny.webp" alt="Sunny">
+                <p class="current-weather__temperature"><span id="current-temperature">20</span><span class="temperature-unit">°</span></p>
+              </div>
+            </section>
+
+            <section class="weather-metrics" aria-label="Current weather details">
+              <article class="metric-card">
+                <h3>Feels Like</h3>
+                <p><span id="feels-like">18</span><span class="temperature-unit">°</span></p>
+              </article>
+              <article class="metric-card">
+                <h3>Humidity</h3>
+                <p><span id="humidity">46</span>%</p>
+              </article>
+              <article class="metric-card">
+                <h3>Wind</h3>
+                <p><span id="wind-speed">14</span> <span id="wind-unit-label">km/h</span></p>
+              </article>
+              <article class="metric-card">
+                <h3>Precipitation</h3>
+                <p><span id="precipitation">0</span> <span id="precipitation-unit-label">mm</span></p>
+              </article>
+            </section>
+
+            <section class="daily-forecast" aria-labelledby="daily-forecast-title">
+              <h2 id="daily-forecast-title">Daily forecast</h2>
+              <div class="daily-forecast__list" id="daily-forecast-list">
+                <article class="forecast-day">
+                  <h3>Tue</h3>
+                  <img src="./assets/images/icon-rain.webp" alt="Rain">
+                  <p><span>20°</span><span>14°</span></p>
+                </article>
+                <article class="forecast-day">
+                  <h3>Wed</h3>
+                  <img src="./assets/images/icon-rain.webp" alt="Rain">
+                  <p><span>21°</span><span>15°</span></p>
+                </article>
+                <article class="forecast-day">
+                  <h3>Thu</h3>
+                  <img src="./assets/images/icon-sunny.webp" alt="Sunny">
+                  <p><span>24°</span><span>14°</span></p>
+                </article>
+                <article class="forecast-day">
+                  <h3>Fri</h3>
+                  <img src="./assets/images/icon-partly-cloudy.webp" alt="Partly cloudy">
+                  <p><span>25°</span><span>13°</span></p>
+                </article>
+                <article class="forecast-day">
+                  <h3>Sat</h3>
+                  <img src="./assets/images/icon-storm.webp" alt="Thunderstorm">
+                  <p><span>21°</span><span>15°</span></p>
+                </article>
+                <article class="forecast-day">
+                  <h3>Sun</h3>
+                  <img src="./assets/images/icon-rain.webp" alt="Rain">
+                  <p><span>25°</span><span>16°</span></p>
+                </article>
+                <article class="forecast-day">
+                  <h3>Mon</h3>
+                  <img src="./assets/images/icon-fog.webp" alt="Fog">
+                  <p><span>24°</span><span>15°</span></p>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <section class="hourly-forecast" aria-labelledby="hourly-forecast-title">
+            <div class="hourly-forecast__header">
+              <h2 id="hourly-forecast-title">Hourly forecast</h2>
+              <label class="visually-hidden" for="forecast-day-select">Choose a forecast day</label>
+              <select id="forecast-day-select" name="forecast-day">
+                <option value="0">Tuesday</option>
+                <option value="1">Wednesday</option>
+                <option value="2">Thursday</option>
+                <option value="3">Friday</option>
+                <option value="4">Saturday</option>
+                <option value="5">Sunday</option>
+                <option value="6">Monday</option>
+              </select>
+            </div>
+            <div class="hourly-forecast__list" id="hourly-forecast-list">
+              <article class="forecast-hour"><img src="./assets/images/icon-overcast.webp" alt="Cloudy"><h3>3 PM</h3><p>20°</p></article>
+              <article class="forecast-hour"><img src="./assets/images/icon-partly-cloudy.webp" alt="Partly cloudy"><h3>4 PM</h3><p>20°</p></article>
+              <article class="forecast-hour"><img src="./assets/images/icon-sunny.webp" alt="Sunny"><h3>5 PM</h3><p>20°</p></article>
+              <article class="forecast-hour"><img src="./assets/images/icon-overcast.webp" alt="Cloudy"><h3>6 PM</h3><p>19°</p></article>
+              <article class="forecast-hour"><img src="./assets/images/icon-rain.webp" alt="Rain"><h3>7 PM</h3><p>18°</p></article>
+              <article class="forecast-hour"><img src="./assets/images/icon-fog.webp" alt="Fog"><h3>8 PM</h3><p>18°</p></article>
+              <article class="forecast-hour"><img src="./assets/images/icon-rain.webp" alt="Rain"><h3>9 PM</h3><p>17°</p></article>
+              <article class="forecast-hour"><img src="./assets/images/icon-overcast.webp" alt="Cloudy"><h3>10 PM</h3><p>17°</p></article>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="attribution">
+        Challenge by <a href="https://www.frontendmentor.io?ref=challenge" target="_blank" rel="noreferrer">Frontend Mentor</a>.
+      </footer>
+    </div>
+  </body>
+</html>
