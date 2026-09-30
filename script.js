@@ -1,5 +1,6 @@
 const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
+const REVERSE_GEOCODING_URL = "https://api.bigdatacloud.net/data/reverse-geocode-client";
 
 const elements = {
   searchForm: document.querySelector("#search-form"),
@@ -94,6 +95,45 @@ async function fetchJson(url) {
     throw new Error(`Weather request failed (${response.status})`);
   }
   return response.json();
+}
+
+function getBrowserPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported by this browser."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      maximumAge: 5 * 60 * 1000,
+      timeout: 10000
+    });
+  });
+}
+
+async function getCurrentLocation() {
+  const position = await getBrowserPosition();
+  const { latitude, longitude } = position.coords;
+  const params = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    localityLanguage: "en"
+  });
+  let place = {};
+  try {
+    place = await fetchJson(`${REVERSE_GEOCODING_URL}?${params}`);
+  } catch (error) {
+    console.info("Reverse geocoding is unavailable; showing coordinates-based weather.", error);
+  }
+
+  return {
+    name: place.city || place.locality || place.principalSubdivision || "My location",
+    admin1: place.city ? place.principalSubdivision : "",
+    country: place.countryName || "",
+    latitude,
+    longitude
+  };
 }
 
 async function findLocations(query) {
@@ -445,5 +485,23 @@ elements.unitsMenu.addEventListener("change", (event) => {
 elements.unitsPresetButton.addEventListener("click", applyUnitPreset);
 elements.retryButton.addEventListener("click", () => loadWeather(state.lastRequest));
 
+async function loadInitialWeather() {
+  const startupRequestId = ++state.requestId;
+  setView("loading");
+
+  try {
+    const location = await getCurrentLocation();
+    if (startupRequestId !== state.requestId) return;
+    await loadWeather(location);
+  } catch (error) {
+    if (startupRequestId !== state.requestId) return;
+    console.info("Could not detect the user's location; using Kinshasa instead.", error);
+    await loadWeather("Kinshasa");
+    if (startupRequestId + 1 === state.requestId) {
+      setStatus("Location unavailable. Showing weather for Kinshasa.");
+    }
+  }
+}
+
 readSelectedUnits();
-loadWeather("Berlin");
+loadInitialWeather();
